@@ -114,7 +114,7 @@ const TradeChart = ({ selectedTick, className }: TradeChartProps) => {
 
    useEffect(()=>{
       
-      const ws = new WebSocket(`ws://localhost:8080/${symbol}`);
+      const ws = new WebSocket(`ws://3.110.62.127:8080/${symbol}`);
       ws.onmessage = (event)=>{
         try {
         const msg:CandleTick = JSON.parse(event.data)

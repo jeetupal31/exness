@@ -2,8 +2,6 @@
 
 import { create } from "zustand";
 import { toast } from "sonner";
-import type Decimal from "decimal.js"; // type-only import
-
 // UUID as a plain string alias — safer for browser/TS usage
 export type UUID = string;
 
@@ -21,8 +19,8 @@ export type CreateUserResponse = {
 
 export type Balance = {
   asset: string;
-  quantity: Decimal;
-  locked: Decimal;
+  quantity: string;
+  locked: string;
 };
 
 export interface UserState {

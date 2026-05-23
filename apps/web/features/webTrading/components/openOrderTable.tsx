@@ -7,13 +7,12 @@ import { useOpenOrders } from "../../../app/zustand/fetchOpenOrder";
 import { useUserStore } from "../../../app/zustand/useUserStore";
 import { backendUrl } from "../../../lib/url";
 import { useGlobalTickStore } from "../../../app/zustand/store";
-import { glob } from "glob";
 
 export const OpenOrdersTable = () => {
   const { openOrders, fetchOpenOrders } = useOpenOrders();
   const globalTick = useGlobalTickStore((state)=>state.gloabalTick)
 
-  const token = localStorage.getItem("token");
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   console.log(token,"this is token this is wahtfasadga")
   useEffect(() => {
       fetchOpenOrders();

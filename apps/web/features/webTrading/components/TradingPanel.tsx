@@ -24,7 +24,7 @@ const TradingPanel = ({ selectedTick , className }: TradingPanelProps) => {
   const [leverage, setLeverage] = useState(1);
   const {fetchOpenOrders} = useOpenOrders()
 
-  const token = localStorage.getItem("token");
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value);
     setLeverage(value);

@@ -20,7 +20,7 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  const activeTicker = TICKERS[activeIndex];
+  const activeTicker = TICKERS[activeIndex]!;
 
   return (
     <div className="relative min-h-screen bg-[#050811] text-white overflow-hidden">
