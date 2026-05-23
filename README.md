@@ -1,135 +1,211 @@
-# Turborepo starter
+# Exness Trading Platform
 
-This Turborepo starter is maintained by the Turborepo core team.
+A full-stack real-time trading platform built with Next.js, Node.js, WebSockets, and Redis. Live BTC/USDT price data is streamed from Binance and delivered to the browser in real time.
 
-## Using this example
+[![Build & Deploy to EC2](https://github.com/jeetupal31/exness/actions/workflows/deploy.yml/badge.svg)](https://github.com/jeetupal31/exness/actions/workflows/deploy.yml)
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
-```
+## Live Links
 
-## What's inside?
+| Service | URL |
+|---------|-----|
+| **Frontend** | [http://3.110.62.127:3000](http://3.110.62.127:3000) |
+| **REST API** | [http://3.110.62.127:4000/api/v1](http://3.110.62.127:4000/api/v1) |
+| **WebSocket** | `ws://3.110.62.127:8080` |
 
-This Turborepo includes the following packages/apps:
+---
 
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+## Architecture
 
 ```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
+                        Browser
+                           |
+              ┌────────────┴────────────┐
+              │                         │
+         HTTP (4000)              WS (8080)
+              │                         │
+        ┌─────┴──────┐          ┌───────┴──────┐
+        │  api-server │          │  ws-server   │
+        │  (Express)  │          │  (WebSocket) │
+        └─────────────┘          └───────┬──────┘
+                                         │
+                                   subscribe
+                                         │
+                                   ┌─────┴──────┐
+                                   │   Redis     │
+                                   └─────┬──────┘
+                                         │
+                                      publish
+                                         │
+                                  ┌──────┴─────┐
+                                  │   poller   │
+                                  │ (Binance   │
+                                  │ WebSocket) │
+                                  └────────────┘
 ```
 
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+### Monorepo Structure
 
 ```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+exness/
+├── apps/
+│   ├── web/        # Next.js 16 frontend (port 3000)
+│   ├── server/     # Express REST API (port 4000)
+│   ├── ws/         # WebSocket broadcast server (port 8080)
+│   └── poller/     # Binance stream → Redis publisher
+├── packages/
+│   ├── ui/
+│   ├── eslint-config/
+│   └── typescript-config/
+└── .github/
+    └── workflows/
+        └── deploy.yml   # CI/CD: build + deploy to EC2
 ```
 
-### Develop
+---
 
-To develop all apps and packages, run the following command:
+## Tech Stack
 
-```
-cd my-turborepo
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Next.js 16, React 19, Tailwind CSS 4, Zustand, lightweight-charts |
+| Backend API | Express 5, TypeScript, JWT, bcrypt |
+| Real-time | WebSocket (ws), Redis pub/sub |
+| Data Source | Binance WebSocket stream (BTC/USDT) |
+| Package Manager | pnpm 9 (monorepo) |
+| Process Manager | PM2 |
+| CI/CD | GitHub Actions |
+| Hosting | AWS EC2 (Ubuntu 26.04, ap-south-1) |
 
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev
+---
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
+## Getting Started Locally
 
-You can develop a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
+### Prerequisites
 
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo dev --filter=web
+- Node.js >= 18
+- pnpm 9
+- Redis running on `localhost:6379`
 
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
+### 1. Clone the repo
 
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo login
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
+```bash
+git clone https://github.com/jeetupal31/exness.git
+cd exness
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### 2. Install dependencies
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo link
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
+```bash
+pnpm install
 ```
 
-## Useful Links
+### 3. Start Redis
 
-Learn more about the power of Turborepo:
+```bash
+# macOS
+brew services start redis
 
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+# Ubuntu/Debian
+sudo service redis-server start
+
+# Windows (if Redis is installed)
+redis-server
+```
+
+### 4. Run all services in development
+
+```bash
+# Terminal 1 — API server (port 4000)
+cd apps/server && npm run dev
+
+# Terminal 2 — WebSocket server (port 8080)
+cd apps/ws && npm run dev
+
+# Terminal 3 — Binance poller
+cd apps/poller && npm run dev
+
+# Terminal 4 — Next.js frontend (port 3000)
+cd apps/web && npm run dev
+```
+
+Then open [http://localhost:3000](http://localhost:3000).
+
+### 5. Build for production
+
+```bash
+# Build all services
+cd apps/server  && npm run build
+cd apps/ws      && npm run build
+cd apps/poller  && npm run build
+cd apps/web     && npm run build
+
+# Start with PM2
+pm2 start apps/server/dist/index.js  --name api-server
+pm2 start apps/ws/dist/index.js      --name ws-server
+pm2 start apps/poller/dist/index.js  --name poller
+pm2 start "npm start" --name web     --cwd apps/web
+```
+
+---
+
+## API Reference
+
+### Auth
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/user/signup` | Create new account |
+| `POST` | `/api/v1/user/signin` | Sign in, returns JWT |
+
+### Orders (JWT required)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/order/open` | Open a new position |
+| `GET`  | `/api/v1/order/getOpenOrder` | Get open positions |
+| `POST` | `/api/v1/buy/close-order/:id` | Close a position |
+
+### Candles
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/candles` | Historical candle data |
+
+---
+
+## CI/CD
+
+Every push to `main`:
+
+1. **Build job** — installs dependencies, compiles all 4 TypeScript/Next.js services
+2. **Deploy job** — SSHes into the EC2 instance, runs `git reset --hard`, rebuilds, and restarts PM2
+
+Pull requests to `main` run the build job only (no deploy).
+
+### Required GitHub Secrets
+
+| Secret | Description |
+|--------|-------------|
+| `EC2_HOST` | EC2 public IP address |
+| `EC2_USERNAME` | SSH user (`ubuntu`) |
+| `EC2_SSH_KEY` | Private key (PEM file contents) |
+
+---
+
+## Features
+
+- Live BTC/USDT price feed from Binance (sub-second updates)
+- Real-time candlestick chart powered by `lightweight-charts`
+- Market Buy / Market Sell with configurable leverage (1x–20x)
+- Stop Loss & Take Profit on orders
+- Open positions table with live unrealised PnL
+- JWT-based authentication (signup / signin)
+- In-memory order book and position management
+
+---
+
+## Author
+
+**JeetuPalhub** — [github.com/jeetupal31](https://github.com/jeetupal31)
